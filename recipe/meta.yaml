@@ -1,5 +1,5 @@
 {% set name = "KegAlign" %}
-{% set version = "0.1.2.8" %}
+{% set version = "0.3.4" %}
 {% set kegalign_python_version = "3.12.*" %}
 {% set kegalign_tbb_version = "2020.2.*" %}
 
@@ -9,10 +9,10 @@ package:
 
 source:
   url: https://github.com/galaxyproject/KegAlign/archive/refs/tags/v{{ version }}.tar.gz
-  sha256: 818e92e930967336256413f42eb87be0a804911b8cbf1eaa05c52aa82546a29c
+  sha256: 2ce5266c81dad980bbbf29fe84afa400f0e4fc2ceb6b62bf2e473e8ed7647a29
 
 build:
-  number: 2
+  number: 0
   skip: true  # [win or osx or cuda_compiler_version is undefined or cuda_compiler_version == "None"]
 
 requirements:
@@ -24,9 +24,7 @@ requirements:
     - cmake
     - make
   host:
-    {% if cuda_compiler_version is not undefined %}
-    - cuda-version {{ cuda_compiler_version }}
-    {% endif %}
+    - cuda-version {{ cuda_compiler_version }}  # [cuda_compiler_version is not undefined]
     - libboost-devel
     - tbb-devel {{ kegalign_tbb_version }}
     - zlib
@@ -47,6 +45,17 @@ requirements:
 test:
   commands:
     - kegalign --help
+    # The scripts are installed by an explicit list in build.sh, not a glob, so a script added
+    # upstream ships only if someone remembers to add a line here too. Nothing else would notice:
+    # the package builds, `kegalign --help` passes, and the omission surfaces only when a Galaxy
+    # tool calls the missing file at run time. Assert each one is actually in the package.
+    - test -x "$PREFIX/bin/build_pairs.py"
+    - test -x "$PREFIX/bin/diagonal_partition.py"
+    - test -f "$PREFIX/bin/lastz-cmd.ini"
+    - test -x "$PREFIX/bin/package_output.py"
+    - test -x "$PREFIX/bin/runner.py"
+    - test -x "$PREFIX/bin/run_kegalign"
+    - test -x "$PREFIX/bin/run_lastz_tarball.py"
 
 about:
   home: https://github.com/galaxyproject/KegAlign
